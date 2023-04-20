@@ -2209,6 +2209,13 @@ static void zbhciCmdHandler(uint16_t u16MsgType, uint16_t u16MsgLen, uint8_t *pu
         }
         break;
 
+        case ZBHCI_CMD_ZCL_ATTR_WRITE_RCV:
+        {
+            zbhci_UnpackZclAttrWriteRspPayload((ts_MsgZclAttrWriteRspPayload *)psPayload, pu8Payload);
+            displayZclAttrWriteRsp((ts_MsgZclAttrWriteRspPayload *)psPayload);
+        }
+        break;
+
         case ZBHCI_CMD_ZCL_ATTR_WRITE_RSP:
         {
             zbhci_UnpackZclAttrWriteRspPayload((ts_MsgZclAttrWriteRspPayload *)psPayload, pu8Payload);
@@ -2751,6 +2758,8 @@ static void zbhci_UnpackZclAttrWriteRspPayload(ts_MsgZclAttrWriteRspPayload *psP
     {
         psPayload->asAttrWriteList[n].u8Status  = BUFFER_TO_U8_OFFSET (pu8Payload, u16Offset, u16Offset);
         psPayload->asAttrWriteList[n].u16AttrID = BUFFER_TO_U16_OFFSET(pu8Payload, u16Offset, u16Offset);
+        psPayload->asAttrWriteList[n].u8Status = BUFFER_TO_U8_OFFSET(pu8Payload, u16Offset, u16Offset);
+        psPayload->asAttrWriteList[n].u8Status = BUFFER_TO_U8_OFFSET(pu8Payload, u16Offset, u16Offset);
     }
 }
 

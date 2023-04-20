@@ -17,6 +17,11 @@
 #define CONFIG_BLUE_LIGHT_PIN 3
 #define CONFIG_LED_1_LIGHT_PIN 8
 
+#define ZCL_RELAY_1 0x21FD
+#define ZCL_RELAY_2 0x21FE
+#define ZCL_RELAY_3 0x21FF
+#define ZCL_RELAY_4 0x2200
+#define ZCL_RELAY_5 0x2201
 const uint8_t au8ManufacturerName[] = {21,'L','I','L','Y','G','O', '.', 'P', 'l', 'a', 'n', 't','_','W','a','t','e','r','i','n','g'};
 
 QueueHandle_t msg_queue;
@@ -119,10 +124,12 @@ void zbhciTask(void *pvParameters)
 {
     ts_HciMsg sHciMsg;
     ts_DstAddr sDstAddr;
+    u_int8_t desired_state;
 
     while (1)
     {
         bzero(&sHciMsg, sizeof(sHciMsg));
+        Serial.print("Message received\n");
         if (xQueueReceive(msg_queue, &sHciMsg, portMAX_DELAY))
         {
             switch (sHciMsg.u16MsgType)
@@ -169,11 +176,49 @@ void zbhciTask(void *pvParameters)
                         digitalWrite(CONFIG_BLUE_LIGHT_PIN, ledState);
                         digitalWrite(CONFIG_LED_1_LIGHT_PIN, ledState);
                     }
+                    Serial.printf("u16MsgType %d\n %d\n", sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u8CmdId, sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u16ClusterId);
                     zbhci_ZclSendReportCmd(0x02, sDstAddr, 1, 1, 0, 1, 0x0006, 0x0000, ZCL_DATA_TYPE_BOOLEAN, 1, &ledState);
                 break;
 
+                case ZBHCI_CMD_ZCL_ATTR_WRITE_RCV:
+                    Serial.printf("Cluster %d %d\n",sHciMsg.uPayload.sZclAttrWriteRspPayload.u16ClusterId,sHciMsg.uPayload.sZclAttrWriteRspPayload.u8SeqNum);
+                    desired_state = (sHciMsg.uPayload.sZclAttrWriteRspPayload.asAttrWriteList[0].u8Status == 0 ? HIGH : LOW);
+                    switch(sHciMsg.uPayload.sZclAttrWriteRspPayload.asAttrWriteList[0].u16AttrID)
+                    {
+                        case ZCL_RELAY_1:
+                        {
+                            digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
+                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                        }
+                        case ZCL_RELAY_2:
+                        {
+                            digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
+                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                        }
+                        case ZCL_RELAY_3:
+                        {
+                            digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
+                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                        }
+                        case ZCL_RELAY_4:
+                        {
+                            digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
+                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                        }
+                        case ZCL_RELAY_5:
+                        {
+                            digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
+                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                        }
+                        default:
+                            Serial.printf("other msg type u16MsgType %d\n", sHciMsg.u16MsgType);
+                        break;
+                    }
+                    Serial.printf("Write %d\n %d\n", sHciMsg.uPayload.sZclAttrWriteRspPayload.asAttrWriteList[0].u8Status, sHciMsg.uPayload.sZclAttrWriteRspPayload.asAttrWriteList[0].u16AttrID);
+                break;
+
                 default:
-                    Serial.printf("u16MsgType %d\n", sHciMsg.u16MsgType);
+                    Serial.printf("other msg type u16MsgType %d\n", sHciMsg.u16MsgType);
                 break;
             }
         }
