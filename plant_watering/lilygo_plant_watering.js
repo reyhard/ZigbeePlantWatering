@@ -50,82 +50,27 @@ const manufacturerOptions = {manufacturerCode: herdsman.Zcl.ManufacturerCode.IKE
 
 const tzLocal = {
     plant_watering: {
-        key: ['state'],
+        key: ['switch_r1','switch_r2','switch_r3','switch_r4','switch_r5'],
         convertSet: async (entity, key, value, meta) => {
-            const lookup = {l1: 1, l2: 2, l3: 3, l4: 4, l5: 5, l6: 6};
-            const keyid = multiEndpoint ? lookup[meta.endpoint_name] : 1;
-            const payloads = {
-                switch_type: {
-                    switchType,
-                },
-                switch_actions: {
-                    switchActions,
-                },
-            };
-
-            await entity.write('genOnOffSwitchCfg', payloads[key]);
-        },
-    },
-    on_off: {
-        key: ['state','switch_r1', 'switch_r2','on_time', 'off_wait_time'],
-        convertSet: async (entity, key, value, meta) => {
-            if(key == "switch_r1") 
-            {
-                const state = value === 'OFF' ? 1 : 0
-                //if(value == "ON") {state = 1}
-                //await entity.command('genOnOff', state, {}, utils.getOptions(meta.mapped, entity));
-                //await entity.write('genOnOff', {0x10: {value: 0x10, type: 0x10}});    
-                try {
-                    await entity.write('genOnOff', {0x21FD: {value: state, type: 16}});
-                } catch (e) {
-                    // Fails for some TuYa devices with UNSUPPORTED_ATTRIBUTE, ignore that.
-                    // e.g. https://github.com/Koenkk/zigbee2mqtt/issues/14857
-                    if (e.message.includes('UNSUPPORTED_ATTRIBUTE')) {
-                    } else {
-                        throw e;
-                    }
-                }
-                return {state: {switch_r1: value}};
-                //await entity.write('genTime', {time: 25});                
-                //const payload = {ctrlbits: 0, ontime: 25, offwaittime: 15};
-                //await entity.command('genOnOff', 'onWithTimedOff', payload, utils.getOptions(meta.mapped, entity));
-            }
-            if(key == "switch_r2") 
-            {
-                const state = value === 'OFF' ? 2 : 65
-                //if(value == "ON") {state = 1}
-                await entity.command('genOnOff', state, {}, utils.getOptions(meta.mapped, entity));
-            }
-            return {state: {switch_r1: 1}};
-            throw Error('The on_time value must be a number! ' + value);
-            const state = meta.message.hasOwnProperty('switch_r1') ? meta.message.state.toLowerCase() : null;
-            utils.validateValue(state, ['toggle', 'off', 'on']);
-
-            if (state === 'on' && (meta.message.hasOwnProperty('on_time') || meta.message.hasOwnProperty('off_wait_time'))) {
-                const onTime = meta.message.hasOwnProperty('on_time') ? meta.message.on_time : 0;
-                const offWaitTime = meta.message.hasOwnProperty('off_wait_time') ? meta.message.off_wait_time : 0;
-
-                if (typeof onTime !== 'number') {
-                    throw Error('The on_time value must be a number!');
-                }
-                if (typeof offWaitTime !== 'number') {
-                    throw Error('The off_wait_time value must be a number!');
-                }
-
-                const payload = {ctrlbits: 0, ontime: Math.round(onTime * 10), offwaittime: Math.round(offWaitTime * 10)};
-                await entity.command('genOnOff', 'onWithTimedOff', payload, utils.getOptions(meta.mapped, entity));
-            } else {
-                await entity.command('genOnOff', 2, {}, utils.getOptions(meta.mapped, entity));
-                if (state === 'toggle') {
-                    const currentState = meta.state[`state${meta.endpoint_name ? `_${meta.endpoint_name}` : ''}`];
-                    return currentState ? {state: {state: currentState === 'OFF' ? 'ON' : 'OFF'}} : {};
+            
+            const lookup = {switch_r1: 0x21FD, switch_r2: 0x21FE, switch_r3: 0x21FF, switch_r4: 0x2200, switch_r5: 0x2201};
+            const cluster = lookup[key];
+            const state = value === 'OFF' ? 1 : 0;
+            try {
+                const obj = {};
+                obj[cluster] = { value: state, type: 16 };
+                await entity.write('genOnOff', obj );
+            } catch (e) {
+                // Fails for some TuYa devices with UNSUPPORTED_ATTRIBUTE, ignore that.
+                // e.g. https://github.com/Koenkk/zigbee2mqtt/issues/14857
+                if (e.message.includes('UNSUPPORTED_ATTRIBUTE')) {
                 } else {
-                    return {state: {state: 2}};
+                    throw e;
                 }
             }
-        },
-        convertGet: async (entity, key, meta) => {
-            await entity.read('genOnOff', ['onOff']);
+            const obj2 = {};
+            obj2[key] = value
+            return {state: obj2};
         },
     },
 }
@@ -136,23 +81,22 @@ const definition = {
     vendor: 'LilyGO',
     description: 'Plant Watering system',
     fromZigbee: [fz.on_off],
-    toZigbee: [tzLocal.on_off],
+    toZigbee: [tzLocal.plant_watering],
     exposes: [
-        //exposes.switch('energy_low', ea.STATE).withUnit('kWh').withDescription('Energy low tariff'),
         exposes.switch().withState('switch_r1', true,
-        'Relay #1',
+        'Water Pump',
         ea.ALL, 'ON', 'OFF'),
         exposes.switch().withState('switch_r2', true,
-        'Relay #2',
+        'Valve #1',
         ea.ALL, 'ON', 'OFF'),
         exposes.switch().withState('switch_r3', true,
-        'Relay #3',
+        'Valve #2',
         ea.ALL, 'ON', 'OFF'),
         exposes.switch().withState('switch_r4', true,
-        'Relay #4',
+        'Valve #3',
         ea.ALL, 'ON', 'OFF'),
         exposes.switch().withState('switch_r5', true,
-        'Relay #5',
+        'Valve #4',
         ea.ALL, 'ON', 'OFF'),
     ],
     // The configure method below is needed to make the device reports on/off state changes

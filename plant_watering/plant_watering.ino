@@ -15,7 +15,13 @@
 #define CONFIG_ZIGBEE_MODULE_PIN 0
 #define CONFIG_USR_BUTTON_PIN 2
 #define CONFIG_BLUE_LIGHT_PIN 3
-#define CONFIG_LED_1_LIGHT_PIN 8
+//#define CONFIG_LED_1_LIGHT_PIN 8
+
+#define PIN_RELAY_1 4
+#define PIN_RELAY_2 5
+#define PIN_RELAY_3 6
+#define PIN_RELAY_4 7
+#define PIN_RELAY_5 8
 
 #define ZCL_RELAY_1 0x21FD
 #define ZCL_RELAY_2 0x21FE
@@ -48,8 +54,12 @@ void setup()
     pinMode(CONFIG_BLUE_LIGHT_PIN, OUTPUT);
     digitalWrite(CONFIG_BLUE_LIGHT_PIN, LOW);
 
-    pinMode(CONFIG_LED_1_LIGHT_PIN, OUTPUT);
-    digitalWrite(CONFIG_LED_1_LIGHT_PIN, LOW);
+    pinMode(PIN_RELAY_1, OUTPUT);
+    pinMode(PIN_RELAY_2, OUTPUT);
+    pinMode(PIN_RELAY_3, OUTPUT);
+    pinMode(PIN_RELAY_4, OUTPUT);
+    pinMode(PIN_RELAY_5, OUTPUT);
+
 
     btn.attachClick(handleClick);
     btn.setPressTicks(3000);
@@ -96,7 +106,6 @@ void handleClick(void)
     {
         Serial.println("Not joined the zigbee network");
     }
-    digitalWrite(CONFIG_LED_1_LIGHT_PIN, ledState);
 
     digitalWrite(CONFIG_BLUE_LIGHT_PIN, ledState);
 }
@@ -161,20 +170,17 @@ void zbhciTask(void *pvParameters)
                     if (sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u8CmdId == 0)
                     {
                         digitalWrite(CONFIG_BLUE_LIGHT_PIN, LOW);
-                        digitalWrite(CONFIG_LED_1_LIGHT_PIN, LOW);
                         ledState = 0;
                     }
                     else if (sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u8CmdId == 1)
                     {
                         digitalWrite(CONFIG_BLUE_LIGHT_PIN, HIGH);
-                        digitalWrite(CONFIG_LED_1_LIGHT_PIN, HIGH);
                         ledState = 1;
                     }
                     else if (sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u8CmdId == 2)
                     {
                         ledState = !ledState;
                         digitalWrite(CONFIG_BLUE_LIGHT_PIN, ledState);
-                        digitalWrite(CONFIG_LED_1_LIGHT_PIN, ledState);
                     }
                     Serial.printf("u16MsgType %d\n %d\n", sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u8CmdId, sHciMsg.uPayload.sZclOnOffCmdRcvPayload.u16ClusterId);
                     zbhci_ZclSendReportCmd(0x02, sDstAddr, 1, 1, 0, 1, 0x0006, 0x0000, ZCL_DATA_TYPE_BOOLEAN, 1, &ledState);
@@ -188,28 +194,39 @@ void zbhciTask(void *pvParameters)
                         case ZCL_RELAY_1:
                         {
                             digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
-                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                            digitalWrite(PIN_RELAY_1, desired_state);
+                            Serial.printf("activated pin 1 \n");
                         }
+                        break;
                         case ZCL_RELAY_2:
                         {
                             digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
-                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                            digitalWrite(PIN_RELAY_2, desired_state);
+                            Serial.printf("activated pin 2 \n");
                         }
+                        break;
                         case ZCL_RELAY_3:
                         {
                             digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
-                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                            digitalWrite(PIN_RELAY_3, desired_state);
+                            Serial.printf("activated pin 3 \n");
                         }
+                        break;
                         case ZCL_RELAY_4:
                         {
                             digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
-                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                            digitalWrite(PIN_RELAY_4, desired_state);
+                            Serial.printf("activated pin 4 \n");
+                            
                         }
+                        break;
                         case ZCL_RELAY_5:
                         {
                             digitalWrite(CONFIG_BLUE_LIGHT_PIN, desired_state);
-                            digitalWrite(CONFIG_LED_1_LIGHT_PIN, desired_state);
+                            digitalWrite(PIN_RELAY_5, desired_state);
+                            Serial.printf("activated pin 5 \n");
                         }
+                        break;
                         default:
                             Serial.printf("other msg type u16MsgType %d\n", sHciMsg.u16MsgType);
                         break;
